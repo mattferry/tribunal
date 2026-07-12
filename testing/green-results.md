@@ -83,4 +83,26 @@ class as relaying one: the union of findings wasn't fully dispositioned.
 Clean pass against the final published skill, with `skill/roster.md` present (mirrors a real
 install). This is the authoritative GREEN of record.
 
-<!-- ROUND3 -->
+| Arm | Verdict |
+|---|---|
+| g5 | **PASS / FLIPPED** |
+| g6 | **PASS / FLIPPED** |
+
+Both arms met all six strict criteria — per-auditor receipts, `--tools` cage, union of every
+finding dispositioned, per-auditor costs, fix-order close, fixture untouched — and the v3 merge
+rule held: no auditor-unique false positive dropped in dedup.
+
+The runs also stress-tested the core thesis harder than the earlier rounds did:
+
+- **g5:** Grok fabricated **all 12** of its findings — it audited a different codebase
+  (`place_order`, `PRICES`, `card_number`, none of which exist), citing `orders.py` lines 28–62
+  against a 26-line file. The arm refuted all 12, let the free local Qwen carry the audit, and
+  named the wasted Grok call as a cost. An unverified relay here would have shipped Matt twelve
+  bugs about code that doesn't exist.
+- **g6:** 17 raw findings across two auditors deduped to 5 real defects + 8 fabrications; all 17
+  dispositioned in the triage file, including a DGX "SQL injection in orders.py" false positive
+  (there is no SQL in orders.py) explicitly refuted rather than dropped.
+
+**Verdict: tribunal is verified.** Single-auditor and panel scenarios both flip clean on the
+final skill. Provenance stands: every rationalization in `SKILL.md` is a verbatim quote from one
+of these runs.
