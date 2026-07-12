@@ -37,13 +37,19 @@ findings are hypotheses, dissent between auditors is signal; (4) cost and availa
 reported honestly — an unauthenticated or unreachable auditor is reported as such, never
 silently skipped or faked.
 
-## Panel roster (as verified on mattpc, 2026-07-12)
+## Supported auditors
 
-| Auditor | Engine | Auth | Cost | Read-only enforcement |
-|---|---|---|---|---|
-| Grok Build (`grok.exe` 0.2.93) | grok-4.5 | grok.com OAuth (on disk) | Matt's xAI subscription | `--tools "read_file,grep,list_dir"` |
-| Codex CLI (`codex` 0.144.1) | OpenAI (per plan) | **pending** `codex login` or `OPENAI_API_KEY` | ChatGPT plan / API | `--sandbox read-only` (OS-level) |
-| DGX Qwen3-Coder-30B | local SGLang, tailnet | none | free | API-only — model never touches the tree |
+Any coding agent that can be run headless and constrained to read-only. Out of the box:
+
+| Auditor | Engine | Read-only enforcement |
+|---|---|---|
+| Grok Build (`grok`) | xAI grok-4.5 | `--tools "read_file,grep,list_dir"` (tool allowlist) |
+| OpenAI Codex CLI (`codex`) | OpenAI models | `--sandbox read-only` (OS-level) |
+| Any OpenAI-compatible endpoint | self-hosted / local (SGLang, vLLM, LM Studio, Ollama, llama.cpp) | API-only — the model never touches the tree |
+
+You describe your own panel in `roster.md` (copied from `roster.example.md`) — which auditors
+you have, how to invoke them, and what each costs. Full per-auditor runbooks in
+`skill/references/`.
 
 ## Does it actually work?
 
@@ -64,7 +70,13 @@ data point: an external auditor is worth having *and* cannot be trusted unverifi
 
 Full corpus: `testing/red-corpus.md`, `testing/green-results.md`.
 
-## Status
+## Install
 
-Skill is RED/GREEN-tested and in use. Codex auditor is fully documented but awaits
-authentication on this machine (`codex login`) — until then the panel runs Grok + local.
+1. Copy `skill/` to `~/.claude/skills/tribunal/`.
+2. Copy `roster.example.md` to `roster.md` in that directory and fill in the auditors you have.
+3. Ask Claude Code for an external QA audit — the skill triggers on second-opinion / independent
+   review requests.
+
+## License
+
+MIT — see [LICENSE](LICENSE).
