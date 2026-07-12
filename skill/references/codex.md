@@ -1,16 +1,15 @@
 # OpenAI Codex CLI as a read-only QA auditor
 
-Facts verified 2026-07-12 on mattpc (codex-cli 0.144.1, installed globally via
-`npm install -g @openai/codex`).
+CLI behavior verified against codex-cli 0.144.1 (2026-07-12), installed via
+`npm install -g @openai/codex`. Record your machine's auth state in `roster.md`.
 
-## Standing state on mattpc
+## Standing state
 
-- Binary: `codex` (npm global, Node 24).
-- **Auth: NOT configured as of 2026-07-12.** Options, in preference order:
-  1. `codex login` — browser OAuth against a ChatGPT plan (Matt's screen, ~30s).
-  2. `OPENAI_API_KEY` env var / `codex login --api-key` — needs an OpenAI API key
-     (none in the vault as of 2026-07-12).
-- Until one of those happens, Codex audits are UNAVAILABLE — say so in the report; never
+- Binary: `codex` (npm global).
+- Auth options, in preference order:
+  1. `codex login` — browser OAuth against a ChatGPT plan (needs a human at a screen, ~30s).
+  2. `OPENAI_API_KEY` env var / `codex login --api-key` — needs an OpenAI API key.
+- If neither is configured, Codex audits are UNAVAILABLE — say so in the report; never
   substitute a fabricated result. The other panel members still run.
 - Check auth state cheaply: `codex login status`.
 
@@ -36,9 +35,10 @@ codex exec -C <DIR_TO_AUDIT> --sandbox read-only --skip-git-repo-check `
 
 ## Local-model escape hatch (no OpenAI auth needed)
 
-`codex exec --oss --local-provider lmstudio ...` drives a model served by LM Studio (installed
-on mattpc) instead of OpenAI — same CLI, same sandbox. Useful if Matt wants the Codex harness
-before deciding on a ChatGPT plan; the panel value of *OpenAI's models* still requires auth.
+`codex exec --oss --local-provider lmstudio ...` (or `ollama`) drives a locally served model
+instead of OpenAI — same CLI, same sandbox. Useful to exercise the Codex harness before
+committing to a ChatGPT plan; note the panel value of *OpenAI's models specifically* still
+requires auth.
 
 ## Never
 

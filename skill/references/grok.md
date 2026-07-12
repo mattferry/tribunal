@@ -1,15 +1,17 @@
 # Grok Build as a read-only QA auditor
 
-All facts live-verified 2026-07-12 on mattpc (grok 0.2.93). Full CLI docs: `~/.grok/README.md`.
+CLI behavior verified against grok 0.2.93 (2026-07-12). Full CLI docs ship at `~/.grok/README.md`
+once installed. Put your machine's concrete values (binary path, auth state, which models are
+enabled) in `roster.md`.
 
-## Standing state on mattpc
+## Standing state
 
-- Binary: `C:\Users\mferr\.grok\bin\grok.exe` (on PATH).
-- Auth: OAuth to grok.com, persisted in `~/.grok/auth.json` — headless calls work from any
-  child process with no login step. **Usage bills Matt's grok.com subscription.**
-- If auth ever expires: `grok login` is browser-based — Matt's screen required. Report it as a
+- Binary: `grok` (the installed CLI, on PATH).
+- Auth: OAuth to grok.com, persisted in `~/.grok/auth.json` — once logged in, headless calls
+  work from any child process with no login step. **Usage bills your grok.com subscription.**
+- If auth expires: `grok login` is browser-based and needs a human at a screen. Report it as a
   blocker; do not fake the audit.
-- Models: `grok-4.5` (default), `grok-composer-2.5-fast` (`grok models` to re-check).
+- Models: `grok-4.5` (default), `grok-composer-2.5-fast` (`grok models` to list what's enabled).
 
 ## Canonical audit invocation
 

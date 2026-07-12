@@ -35,6 +35,27 @@ line is wrong more often than any single reviewer's hit rate predicts.
 Diversity beats redundancy: two auditors with different lenses or families out-perform the
 same auditor run twice. Don't ask the panel to vote — ask each for findings, then verify.
 
+## Auditors hallucinate — plan for it
+
+Measured, not theorized: in a 2026-07-12 test run, Grok-4.5 returned 15 findings on a 60-line
+two-file fixture and **6 were fabricated** — a `cancel()` function that isn't in the code, a
+`product_id` SQL query that doesn't exist, `unit_price/total` float math that was never
+written, and line citations in the 42–82 range for files that are 34 and 26 lines long. The
+same model, on the same fixture, in a different run produced 14 findings with **zero**
+fabrications.
+
+Two consequences:
+
+1. **Verification is not a formality, it's the load-bearing step.** An unverified relay would
+   have sent Matt six bugs that don't exist, in a report that reads exactly like a real one.
+2. **Fabrication is not a reason to drop an auditor.** The same runs caught every real defect.
+   The panel's job is to generate candidates; yours is to kill the bad ones. Cheap false
+   positives you can refute in seconds are an acceptable price for a genuine outside view —
+   silent false negatives are what you're actually buying protection against.
+
+Line numbers are the cheapest tell: compare the cited line against the file's actual length
+before anything else.
+
 ## Dissent handling
 
 - **Agreement across families** (two auditors flag the same line): treat as near-confirmed;

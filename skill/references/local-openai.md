@@ -1,47 +1,50 @@
 # Local / self-hosted OpenAI-compatible endpoints as auditors
 
 The cheapest panel member: any OpenAI-compatible `/v1/chat/completions` endpoint. No agentic
-tools, no filesystem access — you send it code, it sends back findings. Structurally read-only
-by construction.
+tools, no filesystem access — you send it code, it sends back findings. **Structurally
+read-only by construction**: the model never sees the tree, so it cannot touch it.
 
-## DGX Spark Qwen3-Coder (verified 2026-07-12)
+Works with SGLang, vLLM, LM Studio, Ollama, llama.cpp — they all expose the same shape. Put
+your host, port, and model id in your `roster.md`; the pattern below is identical regardless.
 
-- Endpoint: `http://100.95.10.94:8000/v1` (tailnet; SGLang, boot-start service on the DGX).
-- Model id: `qwen3-coder-30b-abl` (Qwen3-Coder-30B-A3B-Abliterated, BF16, 256K ctx, ~30 tok/s).
-- Cost: free, private, no quota. Measured: single-file review in ~7s.
-- Reachability check: `Invoke-RestMethod http://100.95.10.94:8000/v1/models` — if it fails, the
-  DGX is down/asleep; report the gap, don't fake it.
+## Availability check (always run it before claiming the member is up)
 
-### Canonical review call (PowerShell)
+```powershell
+Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/models' -TimeoutSec 10 | ForEach-Object { $_.data.id }
+```
+
+If it fails, the box is down or asleep — report the panel gap. Never narrate an audit from a
+member you didn't reach.
+
+## Canonical review call (PowerShell)
 
 ```powershell
 $code = Get-Content <FILE> -Raw
 $body = @{
-  model = 'qwen3-coder-30b-abl'; temperature = 0.2; max_tokens = 1200
+  model = '<MODEL_ID>'; temperature = 0.2; max_tokens = 1200
   messages = @(
     @{ role = 'system'; content = 'You are a strict code reviewer. Report every real defect as a JSON array of objects with keys: line, severity, summary. Output ONLY the JSON array.' },
     @{ role = 'user'; content = "Review this file:`n`n$code" }
   )
 } | ConvertTo-Json -Depth 6
-Invoke-RestMethod -Uri 'http://100.95.10.94:8000/v1/chat/completions' -Method Post `
+Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/chat/completions' -Method Post `
   -ContentType 'application/json' -Body $body -TimeoutSec 300 |
   ForEach-Object { $_.choices[0].message.content }
 ```
 
-Parse defensively: a 30B local model follows the JSON-only instruction most of the time, not
-always. Strip fences/prose around the array before `ConvertFrom-Json`; on parse failure, retry
-once with "Output ONLY the JSON array, no prose." appended.
+Save the raw response to a file — that file is this auditor's receipt.
 
-## Scope honestly
+Parse defensively: a small local model follows "JSON only" most of the time, not always. Strip
+fences and prose around the array before `ConvertFrom-Json`; on a parse failure, retry once with
+"Output ONLY the JSON array, no prose." appended.
 
-- A chat endpoint sees ONLY what you paste. It cannot explore the repo, chase imports, or read
-  callers — so per-file findings are reliable, whole-system findings are not. Feed it focused
-  units (a file, a diff + touched context) and say in the report that its view was scoped.
-- 256K context allows multi-file pastes; keep each call to one review unit anyway — quality
-  drops when a small model is asked to hold a whole subsystem.
+## Scope this auditor honestly
 
-## Other endpoints
+A chat endpoint sees **only what you paste**. It cannot explore the repo, chase imports, or read
+callers — so per-file findings are reliable and whole-system findings are not. Feed it focused
+units (one file, or a diff plus the context it touches), and say in the report that its view was
+scoped. A large context window doesn't change this: quality drops when a small model is asked to
+hold a whole subsystem at once.
 
-LM Studio on mattpc exposes the same API shape (`http://localhost:1234/v1` when its server is
-running, model ids via `/v1/models`). Same pattern, same caveats. Any future vLLM/SGLang/llama.cpp
-box on the tailnet slots in identically: verify `/v1/models`, then reuse the call above.
+Reference point: a 30B coder model reviews a ~35-line file in about 7 seconds and reliably
+catches injection, silent-except, and comparison bugs — good value for a free panel seat.
