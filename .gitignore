@@ -1,0 +1,7 @@
+# Your machine's real panel roster (copy skill/roster.example.md → skill/roster.md)
+skill/roster.md
+
+# Audit artifacts
+*-audit.json
+*-triage.md
+__pycache__/

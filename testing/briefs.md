@@ -1,4 +1,4 @@
-# crosscheck — RED/GREEN behavioral testing brief
+# tribunal — RED/GREEN behavioral testing brief
 
 Method inherited from the Fable skill pack (`~/.claude/skills/_testing/briefs.md`): a skill is
 verified by behavior flips on real Claude Opus 4.8 subagents, not by prose review.

@@ -53,9 +53,34 @@ The arm nailed the two hardest traps and still failed on report discipline:
 6. Added the hallucination finding to the skill body — auditors fabricate, which is *why*
    verification is non-optional.
 
-## Round 2 — skill v2
+## Round 2 — skill v2 (panel scenario, arms g3/g4)
 
-Re-test of the panel scenario, 2 arms (g3, g4), same forensic judging plus explicit per-auditor
-receipt checks. Results below.
+| Arm | Verdict | Note |
+|---|---|---|
+| g4 | **PASS / FLIPPED** | All six criteria met; caught Grok hallucinating **18 of 20** findings and dispositioned all 30 across auditors |
+| g3 | **FAIL / MIXED** | Everything right except one merge miss |
 
-<!-- ROUND2 -->
+Both arms fixed every round-1 failure: per-auditor receipts (Grok session corroborated in
+`~/.grok/sessions`, DGX raw saved to a file, Codex verified not-run via `codex login status`),
+`--tools` allowlist shown, per-auditor costs named, fix-order close (no permission-ask), fixture
+byte-identical to master, exploits proven by *running* the code (`$100 → $150`).
+
+**The g3 miss (→ v3 patch):** g3 caught every one of Grok's fabrications, then during the
+Grok+DGX **merge** silently dropped a DGX-*unique* false positive — a bogus "refund SQL-injection
+at line 27" (refund is parameterized, not injectable) — collapsing it in a "dedupe to 10" step
+instead of giving it an explicit REFUTED. Dropping a fabrication in dedup is the same failure
+class as relaying one: the union of findings wasn't fully dispositioned.
+
+## Skill v2 → v3 patch
+
+- Triage protocol: **the disposition set is the UNION of all auditors' findings**; dedup
+  collapses exact duplicates only; a unique false positive gets an explicit REFUTED.
+- New rationalization row (the "dedupe to 10" quote) and a new red flag (a finding that "deduped
+  away" with no verdict).
+
+## Round 3 — skill v3 (authoritative, arms g5/g6)
+
+Clean pass against the final published skill, with `skill/roster.md` present (mirrors a real
+install). This is the authoritative GREEN of record.
+
+<!-- ROUND3 -->

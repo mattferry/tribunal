@@ -1,22 +1,23 @@
-# crosscheck
+# tribunal
 
 **Independent QA for AI-written code: a Claude Code skill + runbooks that put other coding
 models on the review panel.**
 
-The author of a change is the worst-placed agent to judge it. `crosscheck` teaches a Claude Code
-session to submit its own work to *external* coding agents — different model families, different
-blind spots — as read-only auditors, then triage their findings with discipline instead of
-relaying them as truth.
+The author of a change is the worst-placed agent to judge it. `tribunal` teaches a Claude Code
+session to convene *external* coding agents — different model families, different blind spots —
+as read-only auditors, then triage their findings with discipline instead of relaying them as
+truth.
 
 ## What's here
 
 ```
-skill/
-  SKILL.md               The installable Claude Code skill (copy to ~/.claude/skills/crosscheck/)
+skill/                   Copy this whole dir to ~/.claude/skills/tribunal/
+  SKILL.md               The installable Claude Code skill
+  roster.example.md      Template: your panel — copy to roster.md and fill in
   references/
     grok.md              Grok Build (xAI grok-4.5) as a read-only auditor — full runbook
     codex.md             OpenAI Codex CLI as a read-only auditor — full runbook
-    local-openai.md      Any OpenAI-compatible endpoint (DGX SGLang, LM Studio) as an auditor
+    local-openai.md      Any OpenAI-compatible endpoint (SGLang, vLLM, LM Studio, Ollama)
 docs/
   panel-design.md        Why independent review, panel sizing, dissent handling
 testing/
