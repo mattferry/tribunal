@@ -9,22 +9,41 @@ your host, port, and model id in your `roster.md`; the pattern below is identica
 
 ## Availability check (always run it before claiming the member is up)
 
-```powershell
-Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/models' -TimeoutSec 10 | ForEach-Object { $_.data.id }
+```bash
+curl -sf --max-time 10 http://<HOST>:<PORT>/v1/models | jq -r '.data[].id'
 ```
+
+PowerShell: `Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/models' -TimeoutSec 10 | % { $_.data.id }`
 
 If it fails, the box is down or asleep — report the panel gap. Never narrate an audit from a
 member you didn't reach.
 
-## Canonical review call (PowerShell)
+## Canonical review call
+
+Ask for a `file` key and tell the model which path it is reviewing — without it, findings from a
+multi-file audit can't be attributed during triage, and the union-merge protocol needs
+`file`+`line` identity.
+
+```bash
+jq -n --arg model '<MODEL_ID>' --arg path '<RELATIVE_PATH>' --rawfile code <FILE> '{
+  model: $model, temperature: 0.2, max_tokens: 1200,
+  messages: [
+    {role: "system", content: "You are a strict code reviewer. Report every real defect as a JSON array of objects with keys: file, line, severity, summary. Set file to the path you were given. Output ONLY the JSON array."},
+    {role: "user", content: ("Review this file (path: " + $path + "):\n\n" + $code)}
+  ]}' | curl -sf --max-time 300 -X POST 'http://<HOST>:<PORT>/v1/chat/completions' \
+        -H 'Content-Type: application/json' -d @- | tee audits/<name>-audit.json |
+        jq -r '.choices[0].message.content'
+```
+
+PowerShell equivalent:
 
 ```powershell
 $code = Get-Content <FILE> -Raw
 $body = @{
   model = '<MODEL_ID>'; temperature = 0.2; max_tokens = 1200
   messages = @(
-    @{ role = 'system'; content = 'You are a strict code reviewer. Report every real defect as a JSON array of objects with keys: line, severity, summary. Output ONLY the JSON array.' },
-    @{ role = 'user'; content = "Review this file:`n`n$code" }
+    @{ role = 'system'; content = 'You are a strict code reviewer. Report every real defect as a JSON array of objects with keys: file, line, severity, summary. Set file to the path you were given. Output ONLY the JSON array.' },
+    @{ role = 'user'; content = "Review this file (path: <RELATIVE_PATH>):`n`n$code" }
   )
 } | ConvertTo-Json -Depth 6
 Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/chat/completions' -Method Post `
@@ -32,7 +51,10 @@ Invoke-RestMethod -Uri 'http://<HOST>:<PORT>/v1/chat/completions' -Method Post `
   ForEach-Object { $_.choices[0].message.content }
 ```
 
-Save the raw response to a file — that file is this auditor's receipt.
+Save the raw response into your ignored receipts dir (`audits/` by convention) — that file is
+this auditor's receipt. Redact hardcoded secrets before pasting: the endpoint (and anything
+logging it) sees everything you send, and if the endpoint is unauthenticated, so does anyone
+else who can reach it.
 
 Parse defensively: a small local model follows "JSON only" most of the time, not always. Strip
 fences and prose around the array before `ConvertFrom-Json`; on a parse failure, retry once with

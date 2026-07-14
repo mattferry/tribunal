@@ -1,7 +1,9 @@
-# Your machine's real panel roster (copy skill/roster.example.md → skill/roster.md)
-skill/roster.md
+# Your machine's real panel roster (copy roster.example.md → roster.md) — never commit one
+roster.md
 
-# Audit artifacts
+# Audit receipts — route ALL auditor outputs into audits/ (receipts embed machine paths
+# and quoted source)
+audits/
 *-audit.json
 *-triage.md
 __pycache__/

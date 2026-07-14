@@ -17,9 +17,9 @@ line is wrong more often than any single reviewer's hit rate predicts.
 - **Claude (the session) = author and orchestrator.** Applies fixes, owns the final report,
   owns verification of every finding.
 - **External agents = auditors.** Read-only, structurally (sandbox/tool flags). They never
-  edit the tree, never push, never merge. On the git side this is belt-and-suspenders with
-  the `main-review-gate` ruleset (see memory `grok-under-claude-github`): even an agent with
-  write credentials cannot reach `main` without a human-side approval.
+  edit the tree, never push, never merge. On the git side, make this belt-and-suspenders with
+  branch protection: a review-gate ruleset on `main` means even an agent holding write
+  credentials cannot land anything without a human-side approval.
 - Findings flow one way: auditor → orchestrator → verification → report. An auditor's word
   is never quoted as a conclusion.
 
@@ -37,17 +37,16 @@ same auditor run twice. Don't ask the panel to vote — ask each for findings, t
 
 ## Auditors hallucinate — plan for it
 
-Measured, not theorized: in a 2026-07-12 test run, Grok-4.5 returned 15 findings on a 60-line
+Measured, not theorized: in a 2026-07-12 test run, Grok-4.5 returned 15 findings on a 59-line
 two-file fixture and **6 were fabricated** — a `cancel()` function that isn't in the code, a
-`product_id` SQL query that doesn't exist, `unit_price/total` float math that was never
-written, and line citations in the 42–82 range for files that are 34 and 26 lines long. The
-same model, on the same fixture, in a different run produced 14 findings with **zero**
-fabrications.
+`product_id` SQL query that doesn't exist, and line citations in the 42–82 range for files
+that are 34 and 25 lines long. The same model, on the same fixture, in a different run
+produced 14 findings with **zero** fabrications.
 
 Two consequences:
 
 1. **Verification is not a formality, it's the load-bearing step.** An unverified relay would
-   have sent Matt six bugs that don't exist, in a report that reads exactly like a real one.
+   have sent the user six bugs that don't exist, in a report that reads exactly like a real one.
 2. **Fabrication is not a reason to drop an auditor.** The same runs caught every real defect.
    The panel's job is to generate candidates; yours is to kill the bad ones. Cheap false
    positives you can refute in seconds are an acceptable price for a genuine outside view —
@@ -70,6 +69,6 @@ before anything else.
 
 ## Cost honesty
 
-Grok bills Matt's grok.com subscription; Codex will bill a ChatGPT plan or API key; the DGX
-endpoint is free. Reports name what was spent ("2 Grok calls, 1 local"). Quota exhaustion is
-reported, not silently absorbed by shrinking the panel.
+Grok bills your grok.com subscription; Codex bills a ChatGPT plan or an OpenAI API key; a
+self-hosted endpoint is free. Reports name what was spent ("2 Grok calls, 1 local"). Quota
+exhaustion is reported, not silently absorbed by shrinking the panel.

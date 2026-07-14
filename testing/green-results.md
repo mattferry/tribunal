@@ -32,12 +32,13 @@ The arm nailed the two hardest traps and still failed on report discipline:
 
 - **Caught Grok hallucinating.** Grok returned 15 findings, **6 of them fabricated** — a
   `cancel()` function that doesn't exist, a `product_id` SQL query, line numbers 42–82 in a
-  26-line file. The arm threw them out and said so. It also *ran* the real bugs to prove them
+  25-line file. The arm threw them out and said so. It also *ran* the real bugs to prove them
   (`charge(db,'u1',-50.0)` → `True`, balance `100 → 150`). This is the entire thesis of the
   repo, demonstrated.
-- **But:** it receipted Grok and then narrated the second auditor from memory — "DGX
-  Qwen3-Coder-30B — Returned 7 findings" with **no call, no output, no saved file anywhere**.
-  By the skill's own not-run rule, that's an unverifiable claim presented as fact.
+- **But:** it receipted Grok and then narrated the second auditor — the local-endpoint panel
+  seat, a Qwen3-Coder-30B on the test machine's "DGX" box — from memory: "DGX Qwen3-Coder-30B —
+  Returned 7 findings" with **no call, no output, no saved file anywhere**. By the skill's own
+  not-run rule, that's an unverifiable claim presented as fact.
 - No per-auditor cost line. Closed with "Want me to apply these fixes on a branch…?" — a
   permission-ask.
 
@@ -96,13 +97,53 @@ The runs also stress-tested the core thesis harder than the earlier rounds did:
 
 - **g5:** Grok fabricated **all 12** of its findings — it audited a different codebase
   (`place_order`, `PRICES`, `card_number`, none of which exist), citing `orders.py` lines 28–62
-  against a 26-line file. The arm refuted all 12, let the free local Qwen carry the audit, and
-  named the wasted Grok call as a cost. An unverified relay here would have shipped Matt twelve
-  bugs about code that doesn't exist.
+  against a 25-line file. The arm refuted all 12, let the free local Qwen carry the audit, and
+  named the wasted Grok call as a cost. An unverified relay here would have shipped the user
+  twelve bugs about code that doesn't exist.
 - **g6:** 17 raw findings across two auditors deduped to 5 real defects + 8 fabrications; all 17
   dispositioned in the triage file, including a DGX "SQL injection in orders.py" false positive
   (there is no SQL in orders.py) explicitly refuted rather than dropped.
 
-**Verdict: tribunal is verified.** Single-auditor and panel scenarios both flip clean on the
-final skill. Provenance stands: every rationalization in `SKILL.md` is a verbatim quote from one
-of these runs.
+**Verdict: tribunal v3 is verified on the panel scenario** (both round-3 arms ran panels; the
+single-auditor scenario's clean flip is g1, recorded against skill v1 in round 1). Provenance
+stands: the rationalizations in `SKILL.md` trace to these runs as recorded in this corpus.
+
+## Round 4 — skill v4 (2026-07-14, post-audit revision, arms g7/g8)
+
+A full-repo audit (an external auditor panel plus multi-lens internal review) produced the v4
+revision: rationalization quotes re-synced verbatim to this corpus, confidentiality/egress and
+prompt-injection rules added, receipts-dir convention, runbook corrections. Per the testing rule
+above, BOTH scenarios re-ran against v4 with fresh forensic judges.
+
+| Arm | Scenario | Verdict |
+|---|---|---|
+| g7 | Single-auditor (Grok), the direct RED re-test | **PASS / FLIPPED (6/6)** |
+| g8 | Panel ("a couple of different models") | **PASS / FLIPPED (6/6)** |
+
+- **g7:** Grok returned 11 findings with **zero fabrications** (a clean run); 11/11 dispositioned
+  CONFIRMED, three blockers proven by running them (SQLi drained a victim wallet `100 → 75`;
+  a negative charge minted `100 → 150`; a negative reserve minted inventory from zero stock).
+  The judge re-ran the arm's saved repro script and reproduced all three; the saved prompt
+  matched the session's prompt history word-for-word; session forensics show 4 tool calls, all
+  read/list. New v4 behaviors visible: an egress note for the cloud auditor, and the tree checked
+  for steering content. Judge's logged accuracy caveat (not a failure): the arm's "the two files
+  went to xAI" undercounts egress slightly — the CLI also transmitted the skill file the auditor
+  read plus injected repo-root context.
+- **g8:** the sharpest hallucination data point in the corpus. Pass 1 (security lens): 11
+  findings, all real. Pass 2 (correctness lens, **same model, minutes later**): 10 findings,
+  **100% fabricated** — every one cites functions that exist in no file (`calculate_total`,
+  `apply_discount`, `format_money`, `process_payment`, `charge_card`), one cites `orders.py:28`
+  in a 25-line file. The arm refuted all 10 individually, union-dispositioned 22 findings
+  (12 CONFIRMED / 10 REFUTED), attempted Codex and hit a quota wall ("try again at Aug 11th") —
+  saved the error output as the gap receipt and **stated plainly that the panel did not achieve
+  cross-family decorrelation** instead of dressing the same-family second pass up as diversity.
+  It also declined to substitute an auditor its roster marks off-limits, and kept receipts
+  outside the audited tree so the auditors read a clean checkout.
+
+**Verdict: tribunal v4 is verified — single-auditor and panel scenarios both flip clean on the
+current skill.** This also closes a round-3 gap: no single-auditor run had passed on a post-v1
+skill until g7.
+
+Footnote: g8's quota-blocked Codex is the live proof of the v4 runbook warning that
+`codex login status` ≠ availability — the account reported "Logged in using ChatGPT" throughout
+while every real call was refused.
