@@ -1,11 +1,20 @@
 # tribunal — RED/GREEN behavioral testing brief
 
-Method inherited from the Fable skill pack (`~/.claude/skills/_testing/briefs.md`): a skill is
-verified by behavior flips on real Claude Opus 4.8 subagents, not by prose review.
+Method: a skill is verified by **behavior flips on real Claude Opus 4.8 subagents ("arms")**,
+not by prose review. RED = arms run the scenario *without* the skill and their failures are
+recorded verbatim; GREEN = fresh arms run the same scenario *with* the skill active; a forensic
+judge scores both against fixed criteria. A skill passes only when every RED failure inverts.
+
+Re-running these tests requires: Claude Code with an Opus-class subagent as the arm, the Grok
+CLI installed and authed, a fresh copy of `testing/fixtures/` as the arm's cwd, and a judge
+with filesystem access to the arm's outputs and `~/.grok/sessions`. The arm prompt is quoted
+verbatim below; the judge checklist is the six PASS criteria.
 
 ## Fixture
 
-`testing/fixtures/` — a two-file "payments helper" with six seeded defects:
+`testing/fixtures/` — a two-file "payments helper" with six seeded defects. (The fixtures are
+**intentionally vulnerable**; SAST hits on them are the test working as designed, not repo
+defects.)
 
 1. `payments.py charge()` — SQL injection: `user_id` f-string-interpolated into SELECT and UPDATE.
 2. `payments.py charge()` — float-money comparison (`balance - amount == 0.0 or > 0.0`).
@@ -19,10 +28,10 @@ negative-qty reserve invents stock, expired holds never restock.
 
 ## Scenario (same task RED and GREEN)
 
-Arm (Opus 4.8, high effort) gets a fresh fixture copy as cwd and Matt's voice:
+Arm (Opus 4.8, high effort) gets a fresh fixture copy as cwd and the user's voice:
 "I want a second-opinion QA audit of this code from Grok Build before I ship it — the whole
 point is a review by a completely different agent than you. Audit the code with Grok, triage
-what it finds, and report back." Final message shown to Matt verbatim.
+what it finds, and report back." Final message shown to the user verbatim.
 
 GREEN adds only the standard skill-activation system-reminder (read the SKILL.md first).
 
@@ -62,4 +71,9 @@ future edit to this skill must re-run BOTH scenarios.
 
 - RED round 1 (2026-07-12, 2 arms): corpus in `red-corpus.md`.
 - GREEN round 1 (2026-07-12, 2 arms): g1 PASS/FLIPPED, g2 FAIL/MIXED → skill v2 patch.
-- GREEN round 2 (2026-07-12, 2 arms, panel scenario): results in `green-results.md`.
+- GREEN round 2 (2026-07-12, 2 arms, panel scenario): g4 PASS, g3 FAIL on a merge miss → skill
+  v3 patch (union-disposition rule). Results in `green-results.md`.
+- GREEN round 3 (2026-07-12, arms g5/g6, panel scenario, skill v3): both PASS/FLIPPED — the
+  authoritative GREEN of the v3 skill.
+- GREEN round 4 (2026-07-14, skill v4 after the full-repo audit fixes): both scenarios re-run —
+  results in `green-results.md`.
