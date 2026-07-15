@@ -17,7 +17,11 @@ skill/                   Copy this dir's CONTENTS to ~/.claude/skills/tribunal/
   references/
     grok.md              Grok Build (xAI grok-4.5) as a read-only auditor — full runbook
     codex.md             OpenAI Codex CLI as a read-only auditor — full runbook
+    cursor.md            Cursor CLI (composer-2.5) as a read-only auditor — full runbook
     local-openai.md      Any OpenAI-compatible endpoint (SGLang, vLLM, LM Studio, Ollama)
+    static-analysis.md   Deterministic scanners (Bandit/ruff/Semgrep) — the non-LLM seat
+    check_findings.py    Existence pre-filter — auto-refutes fabricated file/line citations
+    reliability.py       Per-auditor reliability log (running confirm/fabrication rate)
     findings.schema.json Ready-made findings schema for schema-constrained auditor output
     example-report.md    A worked example of the report shape the skill requires
 docs/
@@ -47,10 +51,19 @@ Any coding agent that can be run headless and constrained to read-only. Out of t
 |---|---|---|---|
 | Grok Build (`grok`) | xAI grok-4.5 | `--tools "read_file,grep,list_dir"` (tool allowlist) | **Yes — xAI cloud** |
 | OpenAI Codex CLI (`codex`) | OpenAI models | `--sandbox read-only` (OS-level) | **Yes — OpenAI cloud** |
+| Cursor CLI (`cursor-agent`) | Cursor models (e.g. composer-2.5) | `--mode plan` (read-only/planning — no edits, no shell) | **Yes — Cursor cloud** |
 | Any OpenAI-compatible endpoint | self-hosted / local (SGLang, vLLM, LM Studio, Ollama, llama.cpp) | API-only — the model never touches the tree | No (self-hosted) |
+| Deterministic scanners | Bandit / ruff / Semgrep (no LLM) | read-only by construction — only reads files | No (local) |
 
 "Read-only" is a write cage, not a confidentiality guarantee: a cloud auditor transmits every
-file it reads to its provider. For code you can't share externally, use the local seat.
+file it reads to its provider. For code you can't share externally, use the local or deterministic
+seats.
+
+**Keep at least one deterministic scanner on the panel.** An all-LLM panel shares a failure
+mode — every seat can hallucinate a finding, and different models correlate on the same fluent
+mistakes. A deterministic scanner (Bandit/ruff/Semgrep) has the mirror-image error profile: it
+never invents a citation, it's reproducible, it's free, and it runs locally with no egress. It's
+the one seat that genuinely decorrelates the panel. Full runbook: `skill/references/static-analysis.md`.
 
 You describe your own panel in `roster.md` (copied from `roster.example.md`) — which auditors
 you have, how to invoke them, and what each costs. Full per-auditor runbooks in
@@ -77,13 +90,21 @@ round on panel discipline — it narrated a second auditor from memory — which
 forced the per-auditor receipt rule into the skill.) That is the thesis of this repo in one data
 point: an external auditor is worth having *and* cannot be trusted unverified.
 
+The v0.5 round added the deterministic seat, the mechanical existence pre-filter, and a
+per-auditor reliability log, then re-verified both scenarios (round 5) — the existence filter
+mechanically refuted a real line-past-EOF hallucination in-arm, and the deterministic scanner
+caught the two SQL injections with zero false citations while missing the logic-only defects an
+LLM catches: the complementarity, demonstrated on one fixture.
+
 Full corpus: `testing/red-corpus.md`, `testing/green-results.md`.
 
 ## Install
 
 Prerequisites: [Claude Code](https://claude.com/claude-code) (skills support), plus at least one
 auditor: the Grok CLI (`curl -fsSL https://x.ai/cli/install.sh | bash`), the Codex CLI
-(`npm install -g @openai/codex`), or any local OpenAI-compatible endpoint.
+(`npm install -g @openai/codex`), the Cursor CLI (`cursor-agent`), or any local OpenAI-compatible
+endpoint. A deterministic scanner (`pip install bandit ruff`) is free, local, and strongly
+recommended as the panel's non-LLM seat.
 
 1. Copy the **contents** of `skill/` to `~/.claude/skills/tribunal/`:
    `mkdir -p ~/.claude/skills && cp -r skill ~/.claude/skills/tribunal`
