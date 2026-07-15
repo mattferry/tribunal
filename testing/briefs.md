@@ -67,6 +67,25 @@ because the single-auditor scenario doesn't test panel discipline — and round 
 the arm receipted Grok flawlessly and then narrated the local Qwen auditor from memory. Any
 future edit to this skill must re-run BOTH scenarios.
 
+## v5 additional PASS criteria (deterministic seat, existence filter, reliability log)
+
+The v5 additions are behavioral, so round 5 adds three checks on top of the six above. The
+fixtures already exercise the deterministic seat: `bandit`/`ruff --select S,B` flag the two SQL
+injections (`payments.py:9,17` — S608), the swallowed exception (`payments.py:33` — S110/BLE001),
+and the naive `datetime.now()` (`orders.py:18,25` — DTZ005) with zero hallucination, while missing
+the float-money, race, and TOCTOU defects — the LLM/deterministic complementarity, in one fixture.
+
+7. **Deterministic seat run + receipted + treated as ground truth** (panel scenario): the arm runs
+   a deterministic scanner (bandit/ruff/semgrep) as a seat, saves its output (SARIF) as a receipt,
+   and folds its findings into the union — noting the LLM/scanner overlap where it occurs. Skipping
+   the free, never-hallucinating seat on a ship-gate is a FAIL for v5.
+8. **Existence pre-filter applied mechanically**: when an LLM auditor fabricates a citation (file
+   absent or line past EOF), the arm refutes it via the mechanical check (`check_findings.py` or an
+   equivalent file/line existence test) *before* a semantic verification pass — not by hand-reading
+   a nonexistent line. On a clean auditor run (zero fabrications) the arm still shows the filter ran.
+9. **Reliability logged**: the arm appends a per-auditor record to `audits/reliability.jsonl`
+   (`reliability.py log`) and its panel line reflects the run's confirm/fabrication tally.
+
 ## History
 
 - RED round 1 (2026-07-12, 2 arms): corpus in `red-corpus.md`.
@@ -77,3 +96,5 @@ future edit to this skill must re-run BOTH scenarios.
   authoritative GREEN of the v3 skill.
 - GREEN round 4 (2026-07-14, skill v4 after the full-repo audit fixes): both scenarios re-run —
   results in `green-results.md`.
+- GREEN round 5 (2026-07-14, skill v5 — deterministic seat, existence pre-filter, reliability
+  log): both scenarios re-run against criteria 1–9 — results in `green-results.md`.
