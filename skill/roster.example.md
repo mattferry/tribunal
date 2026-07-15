@@ -15,6 +15,7 @@ whole premise is receipts.
 | Grok Build | `grok --cwd <DIR> -p "<prompt>" --tools "read_file,grep,list_dir"` | grok.com OAuth (`~/.grok/auth.json`) — bills your xAI subscription | `--tools` allowlist (no edit/shell in the set) | Yes — xAI cloud | `grok models` (auth) — quota still needs a real call |
 | Codex CLI | `codex exec -C <DIR> --sandbox read-only "<prompt>"` | `codex login` (ChatGPT plan) or `OPENAI_API_KEY` | `--sandbox read-only` (OS-level) | Yes — OpenAI cloud | `codex login status` (auth ONLY — a quota-blocked account still says "Logged in"; the true check is a minimal real call) |
 | Local model | `POST http://<HOST>:<PORT>/v1/chat/completions` | none (self-hosted) | API-only — never sees the tree | No | `GET /v1/models` |
+| Cursor CLI | `cursor-agent --print --output-format json --mode plan --trust --model composer-2.5 --workspace <DIR> "<prompt>"` | `cursor-agent login` — Cursor subscription | `--mode plan` (read-only/planning — no edits, no shell) | Yes — Cursor cloud | `cursor-agent --list-models` (auth) |
 | Deterministic scanner | `bandit -r <DIR> -f sarif -o audits/bandit.sarif` · `ruff check <DIR> --select S,B --output-format sarif` | none — free, local | read-only by construction (only reads files) | No — runs locally | `bandit --version` / `ruff --version` (a local binary) |
 
 ## Notes on filling it in

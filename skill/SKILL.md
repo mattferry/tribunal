@@ -106,8 +106,9 @@ Save every receipt under one ignored directory (`audits/` by convention) — rec
 machine paths and quoted source, and stray receipt files are how private context ends up in a
 commit.
 
-Full runbooks: `references/grok.md`, `references/codex.md`, `references/local-openai.md`,
-`references/static-analysis.md`.
+Full runbooks: `references/grok.md`, `references/codex.md`, `references/cursor.md`,
+`references/local-openai.md`, `references/static-analysis.md`. (Cursor's `cursor-agent` is another
+caged LLM seat — `--mode plan` read-only, model `composer-2.5` for a non-OpenAI, non-Claude family.)
 
 ## Panel sizing
 
@@ -138,9 +139,11 @@ race conditions, TOCTOU windows, and non-atomic read-modify-write patterns".
 1. Number each auditor's findings exactly as returned; keep its severities as *its* ratings.
 2. **Existence pre-filter first — mechanical and free.** Before spending any semantic
    verification, run `references/check_findings.py --findings <f.json> --base <DIR>` over each LLM
-   auditor's findings. A finding whose file is absent or whose cited line is past EOF is a
-   hallucinated citation: mark it REFUTED (fabricated) now and spend no verification budget on it.
-   Deterministic-scanner findings skip this step — their citations always exist.
+   auditor's findings and **save its output under `audits/`** — it is a receipt like any other
+   (the run is not proven by asserting "10/10 passed"; show the file). A finding whose file is
+   absent or whose cited line is past EOF is a hallucinated citation: mark it REFUTED (fabricated)
+   now and spend no verification budget on it. Deterministic-scanner findings skip this step —
+   their citations always exist.
 3. Disposition every surviving finding (CONFIRMED / REFUTED / UNCERTAIN) yourself, against the
    code. If you re-grade a severity, say so explicitly next to the auditor's original — never
    silently.
@@ -188,8 +191,9 @@ python references/reliability.py summary   # confirm-rate + fabrication-rate per
 
 Spend verification budget where it pays: scrutinize the chronically-fabricating model's citations
 first and trust its lone flags least; prefer a historically-reliable seat when you can run only
-one. The log lives at `audits/reliability.jsonl` (ignored — it names your models). This is
-telemetry you already generate; logging it costs nothing.
+one. The log lives at `audits/reliability.jsonl` (ignored — it names your models); run these from
+the audit's work root, not from inside `audits/`, or the default path nests. This is telemetry you
+already generate; logging it costs nothing.
 
 ## Rationalizations observed in testing (Claude Opus 4.8 arms, RED + GREEN rounds, 2026-07-12)
 
@@ -222,6 +226,10 @@ telemetry you already generate; logging it costs nothing.
   collapses exact duplicates only; a unique false positive must be REFUTED, not dropped.
 - A finding whose cited line number exceeds the file's length, or names a file that isn't in the
   tree — that is a hallucination; `check_findings.py` catches it for free, refute it.
+- An auditor whose session shows **zero file reads** — it produced its findings blind, from your
+  prompt alone. A GREEN panel arm caught Grok returning 6 findings with 0 tool calls, half of them
+  fabricated. Check the session's tool-call count; a blind auditor's findings are guesses — weight
+  them near-zero and lean on the seats that actually read the code.
 - A security / money / prod gate with no deterministic scanner on the panel — it is free and never
   hallucinates, so there is no cost excuse to skip the one seat that decorrelates an all-LLM panel.
 - Paraphrased auditor output with no raw/structured output anywhere in the report or a saved file.
