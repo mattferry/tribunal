@@ -53,7 +53,31 @@ Two consequences:
    silent false negatives are what you're actually buying protection against.
 
 Line numbers are the cheapest tell: compare the cited line against the file's actual length
-before anything else.
+before anything else — and the skill ships `references/check_findings.py` to do exactly that
+mechanically, auto-refuting any finding whose file is absent or whose line is past EOF before you
+spend a verification pass on it.
+
+## The deterministic seat — decorrelating an all-LLM panel
+
+A panel of Grok + Codex + a local Qwen is three *different* LLMs, but they are still three LLMs:
+they share the failure mode above (hallucinated findings), and they share it *correlated* — the
+whole point of a panel is decorrelated blind spots, and an all-LLM panel doesn't fully deliver it.
+
+A deterministic static analyzer (Semgrep, Bandit, ruff, Gitleaks) has the mirror-image error
+profile:
+
+|  | LLM auditor | Deterministic scanner |
+|---|---|---|
+| Finds | logic/intent/business-rule bugs, races, cross-file reasoning | known patterns: injection, secrets, unsafe APIs, CVEs |
+| Hallucinates? | yes (cites code that isn't there) | never — a rule matched a real `file:line` or it didn't |
+| Reproducible? | no (different findings each run) | 100% |
+| Cost / egress | tokens; cloud seats transmit your code | free, local, none |
+
+The two are strictly complementary: run at least one of each on any gate that matters. When the
+scanner and an LLM auditor flag the *same* line, the agreement crosses the LLM/deterministic
+boundary — the widest decorrelation available, and the strongest corroboration a panel can give.
+The scanner's one limit is that a pattern match still needs a human judgment on exploitability in
+context (high precision, not perfect) — deterministic removes hallucination, not the need to think.
 
 ## Dissent handling
 
@@ -63,7 +87,10 @@ before anything else.
   verify it on the code like any other.
 - **Direct contradiction** (one says defect, another says intended): the orchestrator reads
   the code and decides; record which auditor was right — over time this calibrates how much
-  weight each panel member deserves.
+  weight each panel member deserves. The skill persists this for free: every finding you
+  disposition is ground truth, so `references/reliability.py` logs each auditor's running
+  confirm-rate and fabrication-rate to `audits/reliability.jsonl`. Spend verification budget on
+  the historically-noisy model's citations first; trust its lone flags least.
 - **All-clear from the whole panel**: still one verification pass by the orchestrator. The
   panel lowers risk; it does not transfer responsibility.
 

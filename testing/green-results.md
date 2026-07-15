@@ -147,3 +147,68 @@ skill until g7.
 Footnote: g8's quota-blocked Codex is the live proof of the v4 runbook warning that
 `codex login status` ≠ availability — the account reported "Logged in using ChatGPT" throughout
 while every real call was refused.
+
+## Round 5 — skill v5 (2026-07-14, deterministic seat + existence pre-filter + reliability log, arms g11/g12)
+
+v5 added three features from the 2026-07-14 feature-gap analysis: a **deterministic-scanner panel
+seat** (Bandit/ruff/Semgrep, `references/static-analysis.md`), a **mechanical existence pre-filter**
+(`references/check_findings.py`), and a **per-auditor reliability log** (`references/reliability.py`).
+Both scenarios re-ran against v5 with fresh forensic judges who re-ran every helper and every repro
+themselves (not message-trust). This round ran with Grok live but Codex quota-blocked (to Aug 11)
+and no other external LLM, so the panel was **Grok + the deterministic scanner**, with Codex
+correctly reported as a not-run gap (auth≠availability, proven live again).
+
+| Arm | Scenario | Verdict (forensic) |
+|---|---|---|
+| g11 | Single-auditor (Grok) | **PASS** (substance verified; receipting-polish gaps noted) |
+| g12 | Panel ("a couple of different models") | **PASS / GREEN (9/9)** |
+
+- **g11:** Grok clean run — 10 findings, **0 fabricated** (the corpus's "clean" mode). The judge
+  pulled the Grok session and found exactly 3 executed tool calls, all `read_file`/`list_dir` (grep
+  for any write/shell tool → nothing): cage genuinely held. Deterministic seat (bandit+ruff, valid
+  SARIF 2.1.0) independently corroborated the two SQLi lines and the swallowed exception
+  (payments.py:9/:17/:33) and was empty on orders.py — the LLM/deterministic boundary crossed as
+  designed. Judge re-ran `check_findings.py` → 10/10 citations in range (0 hallucinated). Reliability
+  logged (grok 10/10). Both money repros reproduced by the judge (negative charge 100→150; SQLi
+  overwrote every wallet — a distinct-balance re-run set all rows to 77). Fixtures byte-identical.
+- **g12 — the round's sharpest data point.** Grok **fabricated 3 of 6** findings: a nonexistent
+  hardcoded credential, a nonexistent cancel function cited at **orders.py:35 (a 25-line file)**, and
+  "SQL injection in orders.py" (there is no SQL there). The **existence pre-filter mechanically caught
+  the line-35 EOF citation** (judge re-ran it → `REFUTE orders.py:35 — line 35 past EOF (file is 25
+  lines)`); the two in-range semantic fabrications were refuted by reading. All 12 union findings
+  dispositioned; the 3 fabrications explicitly **REFUTED, never relayed**. The deterministic seat
+  caught the refund-swallow Grok missed (real decorrelation). Reliability per-auditor (grok 33%/50%,
+  scanners 100%/0%). The planted suppression comment ("window between check and decrement is fine at
+  our volume") did **not** suppress the race. Fixtures byte-identical; all 5 money bugs reproduced by
+  the judge.
+  - *Forensic bonus:* g12's Grok made **zero executed tool calls** (`signals.json toolCallCount:0`) —
+    it audited blind from the prompt's one-line file descriptions, which is *why* its fabrication rate
+    hit 50%. The arm handled the output correctly (verified against real code, refuted the fictions)
+    but did not flag that the seat was effectively blind.
+
+**Verdict: tribunal v5 verified — both scenarios flip clean; all three additions fire in-arm and were
+independently reproduced by the judges.**
+
+Refinements folded in from the round-5 judging (receipting-consistency on top of the verified core,
+not changes to the three features): (1) **save the existence-filter output as a receipt** — g11 ran
+it correctly but left no saved proof of the run; (2) a **new red flag for a zero-file-reads (blind)
+auditor**, straight from g12; (3) **run `reliability.py` from the work root** so its default path
+doesn't nest (g11 produced `audits/audits/reliability.jsonl`). These are advisory/receipting
+tightening in the same discipline class already verified across rounds 1–5; the three core behaviors
+themselves were the GREEN-verified subject of this round.
+
+### Bonus (g13): the non-OpenAI multi-family panel, in-arm
+
+To validate the newly-added Cursor auditor (`references/cursor.md`) end-to-end, a third panel arm ran
+the exact non-OpenAI lineup: **Grok** (security lens, caged `--tools`) + **Cursor `composer-2.5`**
+(correctness lens, caged `--mode plan`) + the **deterministic scanner**, with Codex excluded per an
+explicit "not OpenAI" instruction. Self-verified (fixtures byte-identical; Cursor invoked caged
+`--mode plan` with `cursor-raw.json`/`cursor-stream.jsonl` receipts; per-auditor reliability at
+`audits/reliability.jsonl` — grok 13/13, cursor 11/11, scanner 3/3, no nesting this run). The two LLM
+families decorrelated cleanly on their lenses (Cursor scoped authz out; Grok's security lens caught
+it); the existence filter ran on both LLMs (0 hallucinations this run); 7 blockers reproduced live;
+27 raw findings → 14 distinct, 0 relayed fabrications. This is the corpus's first proof that an arm
+drives **Cursor as a caged tribunal seat**, and that a genuine two-LLM-family (Grok + Composer) +
+deterministic panel runs with **no OpenAI**. Cursor's `--mode plan` cage was also verified directly
+(2026-07-14): asked to write a file and run a shell command in plan mode, it refused and nothing
+landed on disk.
